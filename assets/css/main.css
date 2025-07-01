@@ -847,7 +847,9 @@ section,
   background: url("../img/hero-bg.jpg") top left;
   background-size: cover;
 }
-
+.hero-video-section{
+  position: relative; height: 100vh; overflow: hidden;
+}
 .hero:before {
   content: "";
   background: color-mix(in srgb, var(--background-color), transparent 30%);
@@ -860,6 +862,7 @@ section,
 
 .hero .container {
   position: relative;
+  
 }
 
 .hero h1 {
@@ -867,10 +870,12 @@ section,
   font-size: 48px;
   font-weight: 700;
   line-height: 56px;
+  
 }
 
 .hero h1 span {
   color: var(--accent-color);
+  font-style: italic;
 }
 
 .hero p {
@@ -967,8 +972,7 @@ section,
   display: flex;
   flex-direction: column;
   justify-content:center;
-  padding: 10px;
-  height: 350px; /* equal height for all slides */
+  height: 300px; /* equal height for all slides */
   width: 300px;
   box-sizing: border-box;
 }
