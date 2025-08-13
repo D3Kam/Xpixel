@@ -832,6 +832,7 @@ section,
 
 .section-title p .description-title {
   color: var(--accent-color);
+  
 }
 
 /*--------------------------------------------------------------
@@ -1998,3 +1999,5 @@ section,
     flex-direction: column;
   }
 }
+
+
