@@ -115,7 +115,9 @@
     margin-bottom: 30px;
     color: var(--primary-color);
   }
-  
+  .swiper-slide img{
+    max-height: 220px;
+  }
   /* Footer */
   .footer {
     background: #111;
