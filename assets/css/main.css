@@ -832,7 +832,6 @@ section,
 
 .section-title p .description-title {
   color: var(--accent-color);
-  
 }
 
 /*--------------------------------------------------------------
@@ -2092,45 +2091,3 @@ section.section:not(.hero) {
   background-color: var(--background-color);
 }
 
-/* =========================
-   Fixed Hero Background Video
-   ========================= */
-.hero-video-section {
-  position: relative;
-  min-height: 100vh;
-  overflow: hidden;             /* keeps hero content tidy */
-}
-
-/* the video is fixed to the viewport behind everything */
-.hero-video-section .bg-video {
-  position: fixed;
-  inset: 0;                     /* top:0; right:0; bottom:0; left:0 */
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -1;                  /* sit behind hero content/header */
-}
-
-/* keep hero content above the overlay */
-.hero-video-section .container {
-  position: relative;
-  z-index: 1;
-}
-
-/* a subtle dark overlay only across the hero area for better text contrast */
-.hero-video-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.45));
-  z-index: 0;                   /* above video, below content */
-}
-
-/* accessibility: respect reduced‑motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .hero-video-section .bg-video { display: none; }
-  .hero-video-section::before { background: none; }
-}
-
-/* ensure the header sits above the fixed video */
-.header { position: relative; z-index: 10; }

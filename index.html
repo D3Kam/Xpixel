@@ -95,7 +95,6 @@
         <source src="./assets/img/Hero-video.mp4" type="video/mp4">
         
       </video>      
-      
       <div class="container">
         <div class="row gy-4">
           <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center" data-aos="zoom-out" style="background-color: rgba(256, 256, 256, 0.25); padding: 5px;">
@@ -162,7 +161,7 @@
         <section id="about" class="about section light-background">
 
           <!-- Section Title -->
-          <div class="container section-title" data-aos="fade-up">
+          <div class="section-title" data-aos="fade-up">
             <h2>About</h2>
             <p><span>Find Out More</span> <span class="description-title">About Us</span></p>
           </div><!-- End Section Title -->
@@ -283,7 +282,7 @@
     <section id="services" class="services section">
 
       <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      <div class="section-title" data-aos="fade-up">
         <h2>XBenefits</h2>
         <p><span>Check Our</span> <span class="description-title">Benefits</span></p>
       </div><!-- End Section Title -->
@@ -379,7 +378,7 @@
     <!-- Project Phases -->
     <section id="phases" class="section phases dark-background pixel-bg">
       <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      <div class="section-title" data-aos="fade-up">
       <h2>Phases</h2>
       <p><span>Xpixel</span> <span class="description-title"> Phases</span></p>
       </div>
@@ -432,32 +431,20 @@
 
     <!-- Xpixel Frame Section -->
     <section>
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      
+      <div class="section-title" data-aos="fade-up">
         <h2>Xframe</h2>
         <p><span>Try Xframe </span> <span class="description-title">of Xpixel</span></p>
-      </div><!-- End Section Title -->
-
-    <div id="frame"></div>
-    <div class="preview-settings">
-      <!-- Centered Upload Input -->
-      <div class="upload-section">
-        <label for="imageUpload">Upload Image:</label>
-        <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage(event)">
       </div>
-      
-      <!-- Controls: Left (Area Size) & Right (Position) -->
-      <div class="controls">
-        <div class="area-size">
-          <h2>Area Size</h2>
-          <button onclick="markArea(10,10)">10x10</button>
-          <button onclick="markArea(25,25)">25x25</button>
-          <br>
-          <p>Width: <input type="number" id="customWidth" placeholder="Width"></p>
-          <p>Height: <input type="number" id="customHeight" placeholder="Height"></p>
-          
-          <button onclick="markCustom()">Show custom area</button>
-        </div>
+      <div class=" preview-settings area-size controls">
+        <h2>Area Size</h2>
+        <button onclick="markArea(10,10)">10x10</button>
+        <button onclick="markArea(25,25)">25x25</button>
+      </div>
+    <div id="frame"></div>
+      <div class="preview-settings">
+        <div class="controls">
+        
         <div class="positions">
           <h2>Position</h2>
           <div>
@@ -472,13 +459,42 @@
             <button onclick="repositionArea('bottom-right')">↘️</button>
           </div>
         </div>
+      
+        <!-- Controls: Left (Area Size) & Right (Position) -->
+        <div class="controls">
+          <div class="area-size">
+            <h2>Custom Size</h2>
+            <p>Width: <input type="number" id="customWidth" placeholder="Width"></p>
+            <p>Height: <input type="number" id="customHeight" placeholder="Height"></p>
+            
+            <button onclick="markCustom()">Show custom area</button>
+          </div>
+          
+        </div>
+        <!-- Centered Upload Button -->
+        <div class="upload-section">
+          <input
+            type="file"
+            id="imageUpload"
+            class="file-input-visually-hidden"
+            accept="image/*"
+            onchange="uploadImage(event)"
+          />
+          <label for="imageUpload" class="btn btn-accent btn-upload">
+            <i class="bi bi-upload" aria-hidden="true"></i>
+            <span>Upload image</span>
+          </label>
+          <span id="fileName" class="file-name" aria-live="polite"></span>
+        </div>
       </div>
-    </div>
      </section><!-- Xpixel Frame Section -->
 
      <!-- Featured Services Section -->
      <section id="featured-services" class="featured-services section">
-
+      <div class=" section-title" data-aos="fade-up">
+        <h2>Xfeatures</h2>
+        <p><span class="description-title">X</span><span>features</span></p>
+      </div>
       <div class="container">
 
         <div class="row gy-4">
@@ -535,7 +551,7 @@
     <section id="faq" class="faq section light-background">
 
       <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      <div class="section-title" data-aos="fade-up">
         <h2>F.A.Q</h2>
         <p><span>Frequently Asked</span> <span class="description-title">Questions</span></p>
       </div><!-- End Section Title -->
@@ -609,7 +625,7 @@
     <!-- NFT Section -->
     <section id="clients" class="clients section light-background">
       <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      <div class="section-title">
        <p><span>Famous</span> <span class="description-title">NFT's</span></p>
      </div><!-- End Section Title -->
      <div class="container">
@@ -618,9 +634,9 @@
          <script type="application/json" class="swiper-config">
            {
              "loop": true,
-             "speed": 600,
+             "speed": 2000,
              "autoplay": {
-               "delay": 5000
+               "delay": 1000
              },
              "slidesPerView": "auto",
              "pagination": {
@@ -683,7 +699,7 @@
    <!-- ART Section -->
    <section id="clients" class="clients section light-background">
      <!-- Section Title -->
-     <div class="container section-title" data-aos="fade-up">
+     <div class="section-title">
        <p><span>Famous</span> <span class="description-title">ART</span></p>
      </div><!-- End Section Title -->
      <div class="container">
@@ -692,9 +708,9 @@
          <script type="application/json" class="swiper-config">
            {
              "loop": true,
-             "speed": 500,
+             "speed": 2000,
              "autoplay": {
-               "delay": 8000
+               "delay": 1500
              },
              "slidesPerView": "auto",
              "pagination": {
@@ -768,7 +784,7 @@
     <section id="contact" class="contact section">
 
       <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+      <div class="section-title" data-aos="fade-up">
         <h2>Contact</h2>
         <p><span>Need Help?</span> <span class="description-title">Contact Us</span></p>
       </div><!-- End Section Title -->

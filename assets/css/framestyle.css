@@ -45,18 +45,10 @@
 :root {
   scroll-behavior: smooth;
 }
-#frame {
-  width: 1000px;
-  height: 1000px;
-  border: 5px solid #000000;
-  margin: 20px auto;
-  position: relative;
-  background: #fff;
-}
 
 .mark {
   position: absolute;
-  background-color: rgba(255, 0, 0, 0.5);
+  background-color: #03ffce;
   overflow: hidden;
 }
 
@@ -65,10 +57,10 @@
   margin: 20px auto;
   padding: 20px;
   background: #fff;
-  border: 1px solid #0b9068;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 0px;
 }
 
 .upload-section {
@@ -137,3 +129,233 @@
     flex-direction: column;
   }
 }
+/* Center the upload control */
+.upload-section{
+  text-align:center;
+}
+
+/* Hide the real input but keep it accessible */
+.file-input-visually-hidden{
+  position:absolute !important;
+  width:1px;height:1px;
+  padding:0;margin:-1px;border:0;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+}
+
+/* Generic button */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.65rem 1.1rem;
+  border-radius: var(--button-radius,6px);
+  font: 600 0.95rem/1 var(--heading-font, inherit);
+  border:1px solid transparent;
+  cursor:pointer; user-select:none;
+  text-decoration:none;
+  transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+/* Accent style that matches your palette */
+.btn-accent{
+  background: var(--accent-color);
+  color: var(--contrast-color);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.btn-accent:hover,
+.btn-accent:focus-visible{
+  filter: brightness(0.95);
+  box-shadow: 0 6px 20px rgba(0,0,0,.24);
+}
+.btn-accent:active{ transform: translateY(1px); }
+
+/* Upload button tweaks */
+.btn-upload i{ font-size:1.1rem; line-height:0; }
+
+/* Optional: chosen file name */
+.file-name{
+  display:block;
+  margin-top:.5rem;
+  font-size:.9rem;
+  color: var(--heading-color);
+  opacity:.75;
+}
+
+/* ===== Xframe: responsive square ===== */
+#frame{
+  position: relative;
+  width: clamp(260px, 92vw, 960px); /* fills small screens, caps on large */
+  aspect-ratio: 1 / 1;             /* always a square */
+  margin: 0 auto 28px;
+  border-radius: 12px;
+  background: #0f1012;
+  overflow: hidden;
+  box-shadow: 0 12px 34px rgba(0,0,0,.35);
+}
+
+/* Grid that fills the square */
+#frame .grid{
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 100), 1fr);
+  gap: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Each cell is square, so the whole grid tiles perfectly */
+#frame .pixel{
+  aspect-ratio: 1 / 1;
+  background: #68696b;
+  border: 1px solid rgba(255,255,255,.035);
+}
+
+/* Selection overlay scales with the grid using percentages */
+#frame .selection{
+  position: absolute;
+  left: 0; top: 0; width: 0; height: 0;
+  border: 2px dashed var(--accent-color);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 9999px rgba(0,0,0,.22);
+  transition: left .12s, top .12s, width .12s, height .12s;
+  pointer-events: none;
+}
+#frame .selection .preview{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; border-radius: 4px;
+}
+/* ======== Sector boundaries & locks ======== */
+
+/* Put grid below overlays, mark above */
+#frame .grid{ position: relative; z-index: 1; }
+#frame .mark{ z-index: 3; }
+
+/* Dashed boundary squares (centered) */
+#frame .boundary{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  border: 2px dashed rgba(3,255,206,.75); /* uses your accent hue */
+  border-radius: 8px;
+  pointer-events:none;
+  z-index: 2;
+}
+
+/* Little corner tags for labels */
+#frame .sector-tag{
+  position:absolute; top:-14px; left:-2px;
+  transform: translateY(-100%);
+  background: #0f1012;
+  color: var(--accent-color);
+  padding: 2px 6px;
+  font: 600 12px/1.1 var(--heading-font);
+  border-radius: 6px;
+  border: 1px solid rgba(3,255,206,.35);
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  white-space: nowrap;
+}
+
+/* Blur lock overlay for Stage 2 & 3 */
+#frame .lock-overlay{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  border-radius: 8px;
+  background: rgba(0,0,0,.18);
+  /* real blur where supported (iOS/Chrome/Safari) */
+  backdrop-filter: blur(3px) saturate(0.8);
+  /* fallback if no backdrop-filter */
+  -webkit-backdrop-filter: blur(3px) saturate(0.8);
+  z-index: 2; /* under the .mark */
+  pointer-events:none;
+}
+
+/* Optional lock label badge */
+#frame .lock-badge{
+  position:absolute; right:8px; bottom:8px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font: 600 12px/1.1 var(--heading-font);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.15);
+  letter-spacing:.2px;
+}
+
+/* Helper when we need to highlight illegal placement */
+#frame .mark.is-invalid{
+  outline: 2px solid #df1529;
+  box-shadow: 0 0 0 2px rgba(223,21,41,.35) inset;
+}
+/* ============ Floating Position Pad ============ */
+.position-pad{
+  position: fixed;             /* floats over UI; stays put while scrolling */
+  inset: auto 12px 12px auto;  /* bottom-right by default */
+  z-index: 50;
+  width: 240px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(20,22,28,.98), rgba(20,22,28,.93));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  user-select: none;
+  touch-action: none;          /* makes drag predictable on mobile */
+}
+@media (max-width: 768px){
+  .position-pad{
+    left: 50%; right: auto; transform: translateX(-50%); bottom: 12px;
+    width: min(92vw, 320px);
+  }
+}
+
+.position-pad .pad-head{
+  display:flex; align-items:center; gap:8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: grab;
+}
+.position-pad .pad-head:active{ cursor: grabbing; }
+.position-pad .pad-title{
+  font: 700 13px/1 var(--heading-font, system-ui);
+  opacity: .9;
+}
+.position-pad .pad-actions{ margin-left:auto; display:flex; gap:6px; }
+.position-pad .pad-actions .btn-ico{
+  width:28px;height:28px; display:grid; place-items:center;
+  background: transparent; border:1px solid rgba(255,255,255,.12);
+  border-radius: 8px; color:#fff; opacity:.9; cursor:pointer;
+}
+.position-pad .pad-actions .btn-ico:hover{ background: rgba(255,255,255,.06); }
+
+.position-pad.is-collapsed .pad-body{ display:none; }
+
+.position-pad .pad-body{ padding: 10px; }
+.position-pad .pad-grid{
+  display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.position-pad .pad-grid button{
+  height: 52px; border-radius: 10px; border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color:#fff; font: 700 18px/1 var(--heading-font, system-ui);
+  display:grid; place-items:center; cursor:pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+  touch-action: manipulation;     /* allow press-hold without scrolling */
+}
+.position-pad .pad-grid button:active{ transform: translateY(1px); }
+.position-pad .pad-grid button:hover{ background: rgba(255,255,255,.1); }
+
+.position-pad .pad-step{
+  display:flex; align-items:center; gap:10px; margin-top: 10px;
+}
+.position-pad .pad-step span{
+  font: 700 12px/1 var(--heading-font, system-ui); opacity:.85;
+  width: 42px;
+}
+.position-pad .pad-step input[type="range"]{
+  flex:1; accent-color: var(--accent-color);
+}
+.position-pad .pad-step output{
+  font: 700 12px/1 var(--heading-font, system-ui); opacity:.85;
+  min-width: 58px; text-align:right;
+}
+
+/* Make sure pad never hides #frame on small screens */
+#frame{ scroll-margin-bottom: 120px; }
+
+/* (From earlier steps) boundaries / lock / toasts already exist */
