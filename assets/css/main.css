@@ -1239,6 +1239,73 @@ section,
 .services .service-item:hover h3 {
   color: var(--accent-color);
 }
+/* =========================
+Project Phases (black/gray + accent)
+========================= */
+.phases {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.phases .section-title h2 {
+  background: color-mix(in srgb, var(--accent-color), transparent 92%);
+  color: var(--accent-color);
+}
+
+.phase-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.phase-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, #0f1012, #2d3342);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.phase-num {
+  flex: 0 0 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 28px;
+  color: #0b0b0b;
+  border-radius: 14px;
+  background: linear-gradient(145deg, var(--accent-color), #00b694);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.25),
+    0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.phase-body h3 {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.phase-body p {
+  margin: 4px 0 0;
+  color: #b8bdc7; /* cool gray */
+  font-size: 0.975rem;
+}
+
+/* compact spacing on small screens */
+@media (max-width: 575px) {
+  .phase-item { padding: 14px 16px; }
+  .phase-num { flex-basis: 50px; height: 50px; font-size: 24px; }
+}
+  
 
 /*--------------------------------------------------------------
 # Testimonials Section
@@ -2003,3 +2070,67 @@ section,
     flex-direction: column;
   }
 }
+/* =========================
+   Black & White Pixel Background (utility)
+   ========================= */
+/* Apply this with class="pixel-bg" on body or any section */
+.pixel-bg {
+  /* dark base so white pixels pop */
+  background-color: #0f0f10;
+
+  /* checkerboard pixel pattern (8px squares, softened via alpha) */
+  background-image:
+    linear-gradient(90deg, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.08) 0),
+    linear-gradient(     rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.08) 0);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px; /* offset for the checkerboard effect */
+}
+
+/* If you place pixel-bg on the body, keep sections opaque so the fixed
+   hero video doesn't show behind them while scrolling. */
+section.section:not(.hero) {
+  background-color: var(--background-color);
+}
+
+/* =========================
+   Fixed Hero Background Video
+   ========================= */
+.hero-video-section {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;             /* keeps hero content tidy */
+}
+
+/* the video is fixed to the viewport behind everything */
+.hero-video-section .bg-video {
+  position: fixed;
+  inset: 0;                     /* top:0; right:0; bottom:0; left:0 */
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;                  /* sit behind hero content/header */
+}
+
+/* keep hero content above the overlay */
+.hero-video-section .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* a subtle dark overlay only across the hero area for better text contrast */
+.hero-video-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.45));
+  z-index: 0;                   /* above video, below content */
+}
+
+/* accessibility: respect reduced‑motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .hero-video-section .bg-video { display: none; }
+  .hero-video-section::before { background: none; }
+}
+
+/* ensure the header sits above the fixed video */
+.header { position: relative; z-index: 10; }
