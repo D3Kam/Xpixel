@@ -989,6 +989,10 @@ section,
   margin: 0;
 }
 
+/* --- Consolidated from custom.css (safe, non-conflicting) --- */
+.swiper-slide img{
+  max-height: 220px;
+}
 
 
 /*--------------------------------------------------------------
@@ -1999,5 +2003,3 @@ section,
     flex-direction: column;
   }
 }
-
-
