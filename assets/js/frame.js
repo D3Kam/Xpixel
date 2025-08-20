@@ -17,8 +17,8 @@
   let LOCK_SIDE = S_S2_OUT;
 
   const BASE = 1000;             // design space 1000×1000
-  let MOVE_STEP_DESIGN = 250;    // default step; adjustable
-  const MIN_STEP = 5, MAX_STEP = 500;
+  let MOVE_STEP_DESIGN = 10;    // default step; adjustable
+  const MIN_STEP = 1, MAX_STEP = 20;
 
   const frame = document.getElementById("frame");
   if (!frame) return;
@@ -297,8 +297,8 @@
           <button data-dir="bottom-left">↙</button><button data-dir="bottom-middle">↓</button><button data-dir="bottom-right">↘</button>
         </div>
         <label class="pad-step"><span>Step</span>
-          <input type="range" id="padStep" min="${MIN_STEP}" max="${MAX_STEP}" step="5" value="${MOVE_STEP_DESIGN}">
-          <output id="padStepOut">${MOVE_STEP_DESIGN} px</output>
+          <input type="range" id="padStep" min="${MIN_STEP}" max="${MAX_STEP}" step="1" value="${MOVE_STEP_DESIGN}">
+          <output id="padStepOut">${MOVE_STEP_DESIGN}</output>
         </label>
       </div>`;
     frame.appendChild(pad);
@@ -308,8 +308,8 @@
     const stepInput = pad.querySelector("#padStep");
     const stepOut   = pad.querySelector("#padStepOut");
     stepInput.addEventListener("input", () => {
-      MOVE_STEP_DESIGN = clamp(parseInt(stepInput.value,10)||250, MIN_STEP, MAX_STEP);
-      stepOut.textContent = `${MOVE_STEP_DESIGN} px`;
+      MOVE_STEP_DESIGN = clamp(parseInt(stepInput.value,1)||10, MIN_STEP, MAX_STEP);
+      stepOut.textContent = `${MOVE_STEP_DESIGN}`;
     });
 
     const dirButtons = pad.querySelectorAll(".pad-grid button");
