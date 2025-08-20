@@ -283,11 +283,12 @@
   outline: 2px solid #df1529;
   box-shadow: 0 0 0 2px rgba(223,21,41,.35) inset;
 }
-/* ============ Floating Position Pad ============ */
+/* ============ Floating Position Pad (anchored inside #frame) ============ */
 .position-pad{
-  position: fixed;             /* floats over UI; stays put while scrolling */
-  inset: auto 12px 12px auto;  /* bottom-right by default */
-  z-index: 50;
+  position: absolute;          /* anchored INSIDE #frame */
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;                  /* above toast(5), mark(3), lock(2) */
   width: 240px;
   color: #fff;
   background: linear-gradient(180deg, rgba(20,22,28,.98), rgba(20,22,28,.93));
@@ -295,11 +296,14 @@
   border-radius: 12px;
   box-shadow: 0 14px 40px rgba(0,0,0,.35);
   user-select: none;
-  touch-action: none;          /* makes drag predictable on mobile */
+  touch-action: none;          /* predictable dragging on mobile */
 }
+
 @media (max-width: 768px){
   .position-pad{
-    left: 50%; right: auto; transform: translateX(-50%); bottom: 12px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
     width: min(92vw, 320px);
   }
 }
@@ -335,7 +339,7 @@
   color:#fff; font: 700 18px/1 var(--heading-font, system-ui);
   display:grid; place-items:center; cursor:pointer;
   transition: transform .06s ease, background .2s ease, border-color .2s ease;
-  touch-action: manipulation;     /* allow press-hold without scrolling */
+  touch-action: manipulation;
 }
 .position-pad .pad-grid button:active{ transform: translateY(1px); }
 .position-pad .pad-grid button:hover{ background: rgba(255,255,255,.1); }
@@ -344,8 +348,7 @@
   display:flex; align-items:center; gap:10px; margin-top: 10px;
 }
 .position-pad .pad-step span{
-  font: 700 12px/1 var(--heading-font, system-ui); opacity:.85;
-  width: 42px;
+  font: 700 12px/1 var(--heading-font, system-ui); opacity:.85; width: 42px;
 }
 .position-pad .pad-step input[type="range"]{
   flex:1; accent-color: var(--accent-color);
@@ -354,8 +357,85 @@
   font: 700 12px/1 var(--heading-font, system-ui); opacity:.85;
   min-width: 58px; text-align:right;
 }
+/* ===== Anchored pad (desktop/tablet) ===== */
+.position-pad{
+  position: absolute;          /* inside #frame */
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  width: 240px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(20,22,28,.98), rgba(20,22,28,.93));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  user-select: none;
+  touch-action: none;
+}
+.position-pad .pad-head{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.06); cursor:grab; }
+.position-pad .pad-head:active{ cursor:grabbing; }
+.position-pad .pad-title{ font:700 13px/1 var(--heading-font,system-ui); opacity:.9; }
+.position-pad .pad-actions{ margin-left:auto; display:flex; gap:6px; }
+.position-pad .btn-ico{ width:28px; height:28px; display:grid; place-items:center; background:transparent; border:1px solid rgba(255,255,255,.12); border-radius:8px; color:#fff; opacity:.9; cursor:pointer; }
+.position-pad .btn-ico:hover{ background:rgba(255,255,255,.06); }
+.position-pad.is-collapsed .pad-body{ display:none; }
+.position-pad .pad-body{ padding:10px; }
+.position-pad .pad-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.position-pad .pad-grid button{
+  height:52px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06); color:#fff; font:700 18px/1 var(--heading-font,system-ui);
+  display:grid; place-items:center; cursor:pointer; transition:transform .06s ease, background .2s ease;
+  touch-action:manipulation;
+}
+.position-pad .pad-grid button:hover{ background:rgba(255,255,255,.1); }
+.position-pad .pad-grid button:active{ transform:translateY(1px); }
+.position-pad .pad-step{ display:flex; align-items:center; gap:10px; margin-top:10px; }
+.position-pad .pad-step span{ font:700 12px/1 var(--heading-font,system-ui); opacity:.85; width:42px; }
+.position-pad .pad-step input[type="range"]{ flex:1; accent-color:var(--accent-color); }
+.position-pad .pad-step output{ font:700 12px/1 var(--heading-font,system-ui); opacity:.85; min-width:58px; text-align:right; }
 
-/* Make sure pad never hides #frame on small screens */
-#frame{ scroll-margin-bottom: 120px; }
+/* ===== Mobile: hide anchored pad, use FAB + bottom sheet ===== */
+@media (max-width: 767.98px){
+  .position-pad{ display:none !important; }
+}
 
-/* (From earlier steps) boundaries / lock / toasts already exist */
+/* FAB inside the frame (mobile only) */
+.pad-fab{
+  position:absolute; right:12px; bottom:12px; z-index:6;
+  width:56px; height:56px; border-radius:50%;
+  background: var(--accent-color); color: var(--contrast-color);
+  display:none; place-items:center; font:900 22px/1 var(--heading-font,system-ui);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+@media (max-width: 767.98px){
+  .pad-fab{ display:grid; }
+}
+
+/* Bottom sheet controller (mobile) */
+.position-sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:60;
+  height: min(38vh, 320px); padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(20,22,28,.98), rgba(20,22,28,.96));
+  border-top: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 -18px 50px rgba(0,0,0,.4);
+  transform: translateY(110%); transition: transform .28s ease;
+}
+.position-sheet.is-open{ transform: translateY(0%); }
+.position-sheet .sheet-grip{
+  width:42px; height:4px; border-radius:2px; background: rgba(255,255,255,.25);
+  margin: 4px auto 10px;
+}
+.position-sheet .pad-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.position-sheet .pad-grid button{
+  height:52px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06); color:#fff; font:700 18px/1 var(--heading-font,system-ui);
+}
+.position-sheet .pad-step{ display:flex; align-items:center; gap:10px; margin-top:10px; }
+.position-sheet .pad-step span{ font:700 12px/1 var(--heading-font,system-ui); opacity:.85; width:42px; }
+.position-sheet .pad-step input[type="range"]{ flex:1; accent-color:var(--accent-color); }
+.position-sheet .pad-step output{ font:700 12px/1 var(--heading-font,system-ui); opacity:.85; min-width:58px; text-align:right; }
+
+/* When sheet is open, avoid covering content when scrolling to #frame */
+@media (max-width: 767.98px){
+  #frame{ scroll-margin-bottom: 40vh; }
+}

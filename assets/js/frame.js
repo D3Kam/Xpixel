@@ -2,37 +2,39 @@
 (() => {
   "use strict";
 
-  // ========= Sector math by AREA =========
-  // Center = 1% area -> side = sqrt(.01)*100 = 10%
-  // Rings: 33% area each -> cumulative side lengths:
-  const S_CENTER = 10.0;                           // 10% side
-  const S_S3_OUT = Math.sqrt(0.34) * 100;          // ~58.3095% (Center + S3)
-  const S_S2_OUT = Math.sqrt(0.67) * 100;          // ~81.8535% (Center + S3 + S2)
-  const S_S1_OUT = 100.0;                           // full outer square
+  // ===== Sector math by AREA =====
+  const S_CENTER = 10.0;                           // 10% side (center = 1% area)
+  const S_S3_OUT = Math.sqrt(0.34) * 100;          // ~58.3095% (center + S3)
+  const S_S2_OUT = Math.sqrt(0.67) * 100;          // ~81.8535% (center + S3 + S2)
+  const S_S1_OUT = 100.0;
 
-  // Stage 1: lock S2 + S3 + Center (i.e., everything inside S_S2_OUT)
+  // Unlock levels:
+  // 1 -> unlock S1 only (lock S2+S3+Center)
+  // 2 -> unlock S1+S2     (lock S3+Center)
+  // 3 -> unlock S1+S2+S3  (lock Center)
+  // 4 -> unlock ALL       (no lock)
+  let UNLOCK_LEVEL = 1;
   let LOCK_SIDE = S_S2_OUT;
 
-  // Base design space (your UI assumes 1000 × 1000 "px")
-  const BASE = 1000;
-
-  // Default nudge step (design px) — adjustable via pad slider
-  let MOVE_STEP_DESIGN = 10;
-  const minStep = 1, maxStep = 20;
+  const BASE = 1000;             // design space 1000×1000
+  let MOVE_STEP_DESIGN = 250;    // default step; adjustable
+  const MIN_STEP = 5, MAX_STEP = 500;
 
   const frame = document.getElementById("frame");
   if (!frame) return;
 
-  /* ======================================
-     Helpers
-  ====================================== */
+  const isMobile = () => window.matchMedia("(max-width: 767.98px)").matches;
+
+  /* ---------- helpers ---------- */
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const toPct = (designPx) => clamp((designPx / BASE) * 100, 0.01, 100);
   const stepPct = () => (MOVE_STEP_DESIGN / BASE) * 100;
 
   function lockBounds(sidePct) {
-    const m = (100 - sidePct) / 2; // margin from edge to lock square
+    if (sidePct <= 0) return null; // fully unlocked
+    const m = (100 - sidePct) / 2;
     return { left: m, top: m, right: 100 - m, bottom: 100 - m, margin: m };
+    // margin = ring thickness
   }
 
   function intersects(a, b) {
@@ -65,13 +67,12 @@
 
   function rectFromMark(mark) {
     const left = parseFloat(mark.style.left) || 0;
-    const top = parseFloat(mark.style.top) || 0;
-    const w = parseFloat(mark.style.width) || 0;
-    const h = parseFloat(mark.style.height) || 0;
+    const top  = parseFloat(mark.style.top)  || 0;
+    const w    = parseFloat(mark.style.width) || 0;
+    const h    = parseFloat(mark.style.height) || 0;
     return { left, top, w, h, right: left + w, bottom: top + h };
   }
 
-  // Small toast for feedback
   function toast(msg) {
     let el = document.getElementById("frameToast");
     if (!el) {
@@ -90,9 +91,7 @@
     el._t = setTimeout(() => (el.style.opacity = "0"), 1500);
   }
 
-  /* ======================================
-     Visual overlays: sector boundaries + lock
-  ====================================== */
+  /* ---------- visuals: boundaries + lock ---------- */
   function addBoundary(sidePct, label) {
     const b = document.createElement("div");
     b.className = "boundary";
@@ -105,30 +104,44 @@
     frame.appendChild(b);
   }
 
+  function updateLockOverlay() {
+    let lock = frame.querySelector(".lock-overlay");
+    if (!lock && LOCK_SIDE > 0) {
+      lock = document.createElement("div");
+      lock.className = "lock-overlay";
+      frame.appendChild(lock);
+    }
+    if (lock) {
+      if (LOCK_SIDE <= 0) {
+        lock.remove();
+      } else {
+        lock.style.width = LOCK_SIDE + "%";
+        lock.style.height = LOCK_SIDE + "%";
+        let badge = lock.querySelector(".lock-badge");
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "lock-badge";
+          lock.appendChild(badge);
+        }
+        badge.textContent =
+          UNLOCK_LEVEL === 1 ? "Locked: Stage 2 & 3"
+        : UNLOCK_LEVEL === 2 ? "Locked: Stage 3"
+        : "Locked: Center";
+      }
+    }
+  }
+
   function buildOverlaysOnce() {
-    if (frame.querySelector(".boundary")) return; // avoid duplicates
-    addBoundary(S_S1_OUT, "Sector 1 – 33% (unlocked)");
-    addBoundary(S_S2_OUT, "Sector 2 – 33% (locked)");
-    addBoundary(S_S3_OUT, "Sector 3 – 33% (locked)");
-    addBoundary(S_CENTER, "Center – 1%");
-
-    const lock = document.createElement("div");
-    lock.className = "lock-overlay";
-    lock.style.width = LOCK_SIDE + "%";
-    lock.style.height = LOCK_SIDE + "%";
-
-    const badge = document.createElement("div");
-    badge.className = "lock-badge";
-    badge.textContent = "Locked: Stage 2 & 3";
-    lock.appendChild(badge);
-
-    frame.appendChild(lock);
+    if (!frame.querySelector(".boundary")) {
+      addBoundary(S_S2_OUT, "Sector 2 – 33% (locked)");
+      addBoundary(S_S3_OUT, "Sector 3 – 33% (locked)");
+      addBoundary(S_CENTER, "Center – 1%");
+    }
+    updateLockOverlay();
   }
   buildOverlaysOnce();
 
-  /* ======================================
-     Selection state (percent)
-  ====================================== */
+  /* ---------- selection ---------- */
   const sel = { x: 0, y: 0, w: 0, h: 0 };
   let lastGood = { x: 0, y: 0, w: 0, h: 0 };
 
@@ -136,6 +149,8 @@
 
   function validateOrSnapOutside() {
     const lb = lockBounds(LOCK_SIDE);
+    if (!lb) { lastGood = { ...sel }; return true; }
+
     const mark = ensureMark();
     const r = rectFromMark(mark);
 
@@ -144,8 +159,7 @@
       return true;
     }
 
-    // If selection is too big to fit anywhere in the ring, revert.
-    const ring = lb.margin; // thickness of outer ring
+    const ring = lb.margin;
     if (sel.w > ring && sel.h > ring) {
       Object.assign(sel, lastGood);
       apply();
@@ -155,39 +169,18 @@
       return false;
     }
 
-    // Try snapping to nearest valid band (top/bottom/left/right)
     const candidates = [];
-
     if (sel.h <= ring) {
-      // TOP band
-      candidates.push({
-        x: clamp(sel.x, 0, 100 - sel.w),
-        y: clamp(sel.y, 0, lb.top - sel.h),
-      });
-      // BOTTOM band
-      candidates.push({
-        x: clamp(sel.x, 0, 100 - sel.w),
-        y: clamp(Math.max(sel.y, lb.bottom), lb.bottom, 100 - sel.h),
-      });
+      candidates.push({ x: clamp(sel.x, 0, 100 - sel.w), y: clamp(sel.y, 0, lb.top - sel.h) }); // top
+      candidates.push({ x: clamp(sel.x, 0, 100 - sel.w), y: clamp(Math.max(sel.y, lb.bottom), lb.bottom, 100 - sel.h) }); // bottom
     }
-
     if (sel.w <= ring) {
-      // LEFT band
-      candidates.push({
-        x: clamp(sel.x, 0, lb.left - sel.w),
-        y: clamp(sel.y, 0, 100 - sel.h),
-      });
-      // RIGHT band
-      candidates.push({
-        x: clamp(Math.max(sel.x, lb.right), lb.right, 100 - sel.w),
-        y: clamp(sel.y, 0, 100 - sel.h),
-      });
+      candidates.push({ x: clamp(sel.x, 0, lb.left - sel.w), y: clamp(sel.y, 0, 100 - sel.h) }); // left
+      candidates.push({ x: clamp(Math.max(sel.x, lb.right), lb.right, 100 - sel.w), y: clamp(sel.y, 0, 100 - sel.h) }); // right
     }
 
-    // Choose candidate with smallest shift
     const ox = sel.x, oy = sel.y;
     let best = null, bestD = Infinity;
-
     for (const c of candidates) {
       const test = { left: c.x, top: c.y, right: c.x + sel.w, bottom: c.y + sel.h };
       if (!intersects(test, lb)) {
@@ -203,16 +196,14 @@
       return true;
     }
 
-    // Restore previous
     Object.assign(sel, lastGood);
     apply();
     mark.classList.add("is-invalid");
     setTimeout(() => mark.classList.remove("is-invalid"), 420);
-    toast("Only Sector 1 (outer ring) is available in Stage 1.");
+    toast("Only Sector 1 (outer ring) is available.");
     return false;
   }
 
-  // Nudge by % (used by pad + keyboard)
   function nudge(dxPct, dyPct) {
     sel.x = clamp(sel.x + dxPct, 0, 100 - sel.w);
     sel.y = clamp(sel.y + dyPct, 0, 100 - sel.h);
@@ -220,48 +211,36 @@
     validateOrSnapOutside();
   }
 
-  /* ======================================
-     Public API (keeps your existing hooks)
-  ====================================== */
-
-  // 1) Create mark sized by design px (e.g., 10×10 -> 1%×1%)
+  /* ---------- public API ---------- */
   window.markArea = (wDesign, hDesign) => {
-    const w = toPct(wDesign);
-    const h = toPct(hDesign);
-
-    // Start in Sector 1 (outer ring) top-left band with a small pad
+    const w = toPct(wDesign), h = toPct(hDesign);
     const lb = lockBounds(LOCK_SIDE);
-    const pad = 1; // 1% padding
-    const x = clamp((lb.left - w) / 2, pad, lb.left - w);
-    const y = clamp((lb.top  - h) / 2, pad, lb.top  - h);
-
-    sel.w = w; sel.h = h;
-    sel.x = clamp(x, 0, 100 - w);
-    sel.y = clamp(y, 0, 100 - h);
+    const pad = 1;
+    let x = pad, y = pad;
+    if (lb) {
+      x = clamp((lb.left - w) / 2, pad, lb.left - w);
+      y = clamp((lb.top  - h) / 2, pad, lb.top  - h);
+    }
+    sel.w = w; sel.h = h; sel.x = clamp(x, 0, 100 - w); sel.y = clamp(y, 0, 100 - h);
     apply();
     validateOrSnapOutside();
   };
 
-  // 2) Custom values (still design px)
   window.markCustom = () => {
     const w = parseInt(document.getElementById("customWidth")?.value, 10);
     const h = parseInt(document.getElementById("customHeight")?.value, 10);
-    if (!Number.isFinite(w) || !Number.isFinite(h)) {
-      alert("Please enter valid dimensions.");
-      return;
-    }
+    if (!Number.isFinite(w) || !Number.isFinite(h)) { alert("Please enter valid dimensions."); return; }
     window.markArea(w, h);
   };
 
-  // 3) Compatibility: if your existing arrows still call this, keep it as 250px per click
   window.repositionArea = (dir) => {
-    const s = stepPct(); // current step (defaults to 250px -> 25%)
+    const s = stepPct();
     switch (dir) {
       case "top-left":       nudge(-s, -s); break;
       case "top-middle":     nudge( 0, -s); break;
       case "top-right":      nudge( s, -s); break;
       case "middle-left":    nudge(-s,  0); break;
-      case "middle-middle":  /* no-op */    break;
+      case "middle-middle":  break;
       case "middle-right":   nudge( s,  0); break;
       case "bottom-left":    nudge(-s,  s); break;
       case "bottom-middle":  nudge( 0,  s); break;
@@ -269,12 +248,11 @@
     }
   };
 
-  // 4) Image upload fills the marked area
   window.uploadImage = (event) => {
     const file = event?.target?.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = function(e) {
       const mark = ensureMark();
       mark.innerHTML = "";
       const img = document.createElement("img");
@@ -287,169 +265,167 @@
     reader.readAsDataURL(file);
   };
 
-  // Optional: stage switching
-  window.setXpixelStage = (stage /* 1|2|3 */) => {
-    if (stage === 1) LOCK_SIDE = S_S2_OUT;       // lock S2+S3+Center
-    else if (stage === 2) LOCK_SIDE = S_S3_OUT;  // lock S3+Center
-    else LOCK_SIDE = S_CENTER;                   // lock Center only
-
-    const lock = frame.querySelector(".lock-overlay");
-    if (lock) {
-      lock.style.width = LOCK_SIDE + "%";
-      lock.style.height = LOCK_SIDE + "%";
-      const badge = lock.querySelector(".lock-badge");
-      if (badge) {
-        badge.textContent =
-          stage === 1 ? "Locked: Stage 2 & 3"
-        : stage === 2 ? "Locked: Stage 3"
-        : "Locked: Center";
-      }
-    }
+  // Unlock commands
+  function setUnlockLevel(level){
+    UNLOCK_LEVEL = clamp(level|0, 1, 4);
+    LOCK_SIDE =
+      UNLOCK_LEVEL === 1 ? S_S2_OUT :
+      UNLOCK_LEVEL === 2 ? S_S3_OUT :
+      UNLOCK_LEVEL === 3 ? S_CENTER  : 0;
+    updateLockOverlay();
     validateOrSnapOutside();
-  };
+  }
+  window.setUnlockLevel = setUnlockLevel;     // 1..4
+  window.setXpixelStage = (stage) => setUnlockLevel(stage);   // alias: 1..3
+  window.unlockAll = () => setUnlockLevel(4);
+  window.lockToSector1 = () => setUnlockLevel(1);
+  window.getUnlockLevel = () => UNLOCK_LEVEL;
 
-  /* ======================================
-     Floating Position Pad (drag + hold)
-  ====================================== */
-
-  function buildPad() {
-    if (document.getElementById("positionPad")) return;
-
+  /* ---------- desktop: anchored pad inside frame ---------- */
+  function buildAnchoredPad(){
+    if (frame.querySelector(".position-pad")) return;
     const pad = document.createElement("div");
     pad.className = "position-pad";
-    pad.id = "positionPad";
     pad.innerHTML = `
-      <div class="pad-head" id="padDragHandle">
-        <span class="pad-title">Move</span>
-        <div class="pad-actions">
-          <button class="btn-ico" id="padCollapse" aria-label="Minimize">–</button>
-        </div>
+      <div class="pad-head" id="padDragHandle"><span class="pad-title">Move</span>
+        <div class="pad-actions"><button class="btn-ico" id="padCollapse">–</button></div>
       </div>
       <div class="pad-body">
-        <div class="pad-grid" aria-label="Move selection">
-          <button data-dir="top-left"      aria-label="Up Left">↖</button>
-          <button data-dir="top-middle"    aria-label="Up">↑</button>
-          <button data-dir="top-right"     aria-label="Up Right">↗</button>
-          <button data-dir="middle-left"   aria-label="Left">←</button>
-          <button data-dir="middle-middle" aria-label="No move">•</button>
-          <button data-dir="middle-right"  aria-label="Right">→</button>
-          <button data-dir="bottom-left"   aria-label="Down Left">↙</button>
-          <button data-dir="bottom-middle" aria-label="Down">↓</button>
-          <button data-dir="bottom-right"  aria-label="Down Right">↘</button>
+        <div class="pad-grid">
+          <button data-dir="top-left">↖</button><button data-dir="top-middle">↑</button><button data-dir="top-right">↗</button>
+          <button data-dir="middle-left">←</button><button data-dir="middle-middle">•</button><button data-dir="middle-right">→</button>
+          <button data-dir="bottom-left">↙</button><button data-dir="bottom-middle">↓</button><button data-dir="bottom-right">↘</button>
         </div>
-        <label class="pad-step">
-          <span>Step</span>
-          <input type="range" id="padStep" min="${minStep}" max="${maxStep}" step="5" value="${MOVE_STEP_DESIGN}">
-          <output id="padStepOut">${MOVE_STEP_DESIGN}</output>
+        <label class="pad-step"><span>Step</span>
+          <input type="range" id="padStep" min="${MIN_STEP}" max="${MAX_STEP}" step="5" value="${MOVE_STEP_DESIGN}">
+          <output id="padStepOut">${MOVE_STEP_DESIGN} px</output>
         </label>
-      </div>
-    `;
-    document.body.appendChild(pad);
+      </div>`;
+    frame.appendChild(pad);
 
-    // Collapse toggle
-    pad.querySelector("#padCollapse").addEventListener("click", () => {
-      pad.classList.toggle("is-collapsed");
-    });
+    pad.querySelector("#padCollapse").addEventListener("click", () => pad.classList.toggle("is-collapsed"));
 
-    // Step control
     const stepInput = pad.querySelector("#padStep");
     const stepOut   = pad.querySelector("#padStepOut");
     stepInput.addEventListener("input", () => {
-      MOVE_STEP_DESIGN = clamp(parseInt(stepInput.value, 1) || 10, minStep, maxStep);
-      stepOut.textContent = `${MOVE_STEP_DESIGN}`;
+      MOVE_STEP_DESIGN = clamp(parseInt(stepInput.value,10)||250, MIN_STEP, MAX_STEP);
+      stepOut.textContent = `${MOVE_STEP_DESIGN} px`;
     });
 
-    // Press-and-hold behavior for directional buttons
     const dirButtons = pad.querySelectorAll(".pad-grid button");
     dirButtons.forEach(btn => {
       const dir = btn.getAttribute("data-dir");
-      let rafId = null, down = false, lastTime = 0;
-
-      const stepMove = () => {
-        if (!down) return;
-        const s = stepPct();
-        switch (dir) {
-          case "top-left":       nudge(-s, -s); break;
-          case "top-middle":     nudge( 0, -s); break;
-          case "top-right":      nudge( s, -s); break;
-          case "middle-left":    nudge(-s,  0); break;
-          case "middle-middle":  /* no-op */    break;
-          case "middle-right":   nudge( s,  0); break;
-          case "bottom-left":    nudge(-s,  s); break;
-          case "bottom-middle":  nudge( 0,  s); break;
-          case "bottom-right":   nudge( s,  s); break;
-        }
-        rafId = requestAnimationFrame(stepMove);
-      };
-
-      const start = (e) => {
-        e.preventDefault();
-        down = true;
-        // initial move immediately
-        const s = stepPct();
-        switch (dir) {
-          case "top-left":       nudge(-s, -s); break;
-          case "top-middle":     nudge( 0, -s); break;
-          case "top-right":      nudge( s, -s); break;
-          case "middle-left":    nudge(-s,  0); break;
-          case "middle-middle":  break;
-          case "middle-right":   nudge( s,  0); break;
-          case "bottom-left":    nudge(-s,  s); break;
-          case "bottom-middle":  nudge( 0,  s); break;
-          case "bottom-right":   nudge( s,  s); break;
-        }
-        rafId = requestAnimationFrame(stepMove);
-      };
-      const stop = () => {
-        down = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = null;
-      };
-
+      let rafId = null, down = false;
+      const tick = () => { if (!down) return; window.repositionArea(dir); rafId = requestAnimationFrame(tick); };
+      const start = (e) => { e.preventDefault(); down = true; window.repositionArea(dir); rafId = requestAnimationFrame(tick); };
+      const stop  = () => { down = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; };
       btn.addEventListener("pointerdown", start);
       window.addEventListener("pointerup", stop);
       btn.addEventListener("pointerleave", stop);
       btn.addEventListener("pointercancel", stop);
     });
 
-    // Drag the pad via the header
+    // Drag inside frame
     const handle = pad.querySelector("#padDragHandle");
     let dragging = false, offX = 0, offY = 0;
-
-    const onDown = (e) => {
-      dragging = true;
-      pad.style.transition = "none";
-      const rect = pad.getBoundingClientRect();
-      offX = e.clientX - rect.left;
-      offY = e.clientY - rect.top;
-      e.preventDefault();
-    };
-    const onMove = (e) => {
+    handle.addEventListener("pointerdown", (e)=>{
+      dragging = true; const r = pad.getBoundingClientRect(), f = frame.getBoundingClientRect();
+      offX = e.clientX - r.left; offY = e.clientY - r.top; e.preventDefault();
+    });
+    window.addEventListener("pointermove", (e)=>{
       if (!dragging) return;
-      const x = clamp(e.clientX - offX, 6, window.innerWidth  - pad.offsetWidth  - 6);
-      const y = clamp(e.clientY - offY, 6, window.innerHeight - pad.offsetHeight - 6);
-      pad.style.left = x + "px";
-      pad.style.top  = y + "px";
-      pad.style.right = "auto";
-      pad.style.bottom = "auto";
-      pad.style.transform = "none";
-    };
-    const onUp = () => { dragging = false; };
-
-    handle.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
+      const f = frame.getBoundingClientRect();
+      const x = clamp(e.clientX - f.left - offX, 6, f.width  - pad.offsetWidth  - 6);
+      const y = clamp(e.clientY - f.top  - offY,  6, f.height - pad.offsetHeight - 6);
+      pad.style.left = x + "px"; pad.style.top = y + "px"; pad.style.right = "auto"; pad.style.bottom = "auto"; pad.style.transform = "none";
+    });
+    window.addEventListener("pointerup", ()=> dragging=false);
+    window.addEventListener("pointercancel", ()=> dragging=false);
   }
 
-  // Keyboard nudges (works when page focused)
-  function bindKeyboard() {
-    window.addEventListener("keydown", (e) => {
-      const k = e.key.toLowerCase();
-      const fast = e.shiftKey ? 2 : 1;          // Shift = faster
-      const fine = e.altKey   ? 0.2 : 1;        // Alt   = finer
-      const s = stepPct() * fast * fine;
+  /* ---------- mobile: FAB + bottom sheet ---------- */
+  function buildMobileControls(){
+    if (frame.querySelector(".pad-fab")) return;
 
+    // FAB
+    const fab = document.createElement("button");
+    fab.className = "pad-fab";
+    fab.type = "button";
+    fab.setAttribute("aria-label", "Open movement controller");
+    fab.textContent = "↕";
+    frame.appendChild(fab);
+
+    // Sheet
+    const sheet = document.createElement("div");
+    sheet.className = "position-sheet";
+    sheet.innerHTML = `
+      <div class="sheet-grip"></div>
+      <div class="pad-grid">
+        <button data-dir="top-left">↖</button><button data-dir="top-middle">↑</button><button data-dir="top-right">↗</button>
+        <button data-dir="middle-left">←</button><button data-dir="middle-middle">•</button><button data-dir="middle-right">→</button>
+        <button data-dir="bottom-left">↙</button><button data-dir="bottom-middle">↓</button><button data-dir="bottom-right">↘</button>
+      </div>
+      <label class="pad-step"><span>Step</span>
+        <input type="range" id="sheetStep" min="${MIN_STEP}" max="${MAX_STEP}" step="5" value="${MOVE_STEP_DESIGN}">
+        <output id="sheetStepOut">${MOVE_STEP_DESIGN} px</output>
+      </label>
+    `;
+    document.body.appendChild(sheet);
+
+    const openSheet = () => { sheet.classList.add("is-open"); };
+    const closeSheet = () => { sheet.classList.remove("is-open"); };
+    fab.addEventListener("click", openSheet);
+
+    // Swipe down to close (simple)
+    let startY = null;
+    sheet.addEventListener("pointerdown", (e)=>{ startY = e.clientY; });
+    sheet.addEventListener("pointerup", (e)=>{ if (startY !== null && e.clientY - startY > 30) closeSheet(); startY = null; });
+    sheet.addEventListener("pointercancel", ()=> startY = null);
+
+    // Step control
+    const stepInput = sheet.querySelector("#sheetStep");
+    const stepOut   = sheet.querySelector("#sheetStepOut");
+    stepInput.addEventListener("input", () => {
+      MOVE_STEP_DESIGN = clamp(parseInt(stepInput.value,10)||250, MIN_STEP, MAX_STEP);
+      stepOut.textContent = `${MOVE_STEP_DESIGN} px`;
+    });
+
+    // Buttons with press-and-hold
+    const dirButtons = sheet.querySelectorAll(".pad-grid button");
+    dirButtons.forEach(btn => {
+      const dir = btn.getAttribute("data-dir");
+      let rafId = null, down = false;
+      const tick = () => { if (!down) return; window.repositionArea(dir); rafId = requestAnimationFrame(tick); };
+      const start = (e) => { e.preventDefault(); down = true; window.repositionArea(dir); rafId = requestAnimationFrame(tick); };
+      const stop  = () => { down = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; };
+      btn.addEventListener("pointerdown", start);
+      window.addEventListener("pointerup", stop);
+      btn.addEventListener("pointerleave", stop);
+      btn.addEventListener("pointercancel", stop);
+    });
+
+    // Show/hide with frame visibility
+    const io = new IntersectionObserver(([entry])=>{
+      if (entry.isIntersecting) {
+        fab.style.display = "grid";
+      } else {
+        fab.style.display = "none";
+        closeSheet();
+      }
+    }, { threshold: 0.15 });
+    io.observe(frame);
+
+    // Expose for debugging if needed
+    window._pad = { fab, sheet, openSheet, closeSheet };
+  }
+
+  /* ---------- keyboard (desktop convenience) ---------- */
+  function bindKeyboard(){
+    window.addEventListener("keydown", (e)=>{
+      const k = e.key.toLowerCase();
+      const fast = e.shiftKey ? 2 : 1;
+      const fine = e.altKey ? 0.2 : 1;
+      const s = stepPct() * fast * fine;
       if (["arrowup","w","arrowdown","s","arrowleft","a","arrowright","d"].includes(k)) {
         e.preventDefault();
         if (k === "arrowup" || k === "w")        nudge( 0, -s);
@@ -460,13 +436,34 @@
     }, { passive: false });
   }
 
-  /* ======================================
-     Init
-  ====================================== */
-  // First mark MUST be 10×10 design px in Sector 1
-  window.markArea(10, 10);
-
-  // Build the floating pad + keyboard controls
-  buildPad();
+  /* ---------- init ---------- */
+  window.markArea(10, 10);          // first mark = 10×10 design px in Sector 1
   bindKeyboard();
+
+  // Build controls for current viewport
+  const initControls = () => {
+    if (isMobile()) buildMobileControls();
+    else buildAnchoredPad();
+  };
+  initControls();
+
+  // Re-init on breakpoint change
+  window.addEventListener("resize", () => {
+    // If switching modes, rebuild once
+    const hasFab = !!frame.querySelector(".pad-fab");
+    const needFab = isMobile();
+    if (needFab && !hasFab) buildMobileControls();
+    if (!needFab && !frame.querySelector(".position-pad")) buildAnchoredPad();
+  });
 })();
+// setXpixelStage(1) → unlock Sector 1 only (lock S2+S3+Center)
+
+// setXpixelStage(2) → unlock Sectors 1–2 (lock S3+Center)
+
+// setXpixelStage(3) → unlock Sectors 1–3 (lock Center)
+
+// unlockAll() → unlock everything
+
+// lockToSector1() → back to Stage 1
+
+// setUnlockLevel(n) → generic 1..4 (same mapping)
